@@ -6,8 +6,7 @@ import express, {
 } from "express";
 import cors from "cors";
 import morgan from "morgan";
-import taskRoutes from "./routes/taskRoutes";
-import { error, timeStamp } from "node:console";
+import taskRoutes from "./routes/tasks";
 
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
