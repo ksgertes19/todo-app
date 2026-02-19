@@ -10,7 +10,7 @@ interface UseTasksReturn {
   addTask: (description: string, category: 'Personal' | 'Professional') => void;
   updateTask: (id: string, completed: boolean) => void;
   deleteTask: (id: string) => void;
-  clearCompleted: () => void;
+  clearCompleted: (category: 'Personal' | 'Professional') => void;
   loadTasks: () => void;
 }
 
@@ -122,22 +122,29 @@ export function useTasks(): UseTasksReturn {
     [setTasks],
   );
 
-  // Clear completed tasks
-  const clearCompleted = useCallback(() => {
-    const completedIds = tasksRef.current
-      .filter((task) => task.completed)
-      .map((task) => task.id);
+  // Clear completed tasks in specified category
+  const clearCompleted = useCallback(
+    (category: 'Personal' | 'Professional') => {
+      // Get completed tasks in the specified category
+      const completedIds = tasksRef.current
+        .filter((task) => task.category === category && task.completed)
+        .map((task) => task.id);
 
-    const updatedTasks = tasksRef.current.filter((task) => !task.completed);
-    setTasks(updatedTasks);
+      // Filter out completed tasks in the specified category, keep all others
+      const updatedTasks = tasksRef.current.filter(
+        (task) => !(task.category === category && task.completed),
+      );
+      setTasks(updatedTasks);
 
-    // Delete completed tasks from API
-    completedIds.forEach((id) => {
-      taskApi.deleteTask(id).catch((err) => {
-        console.error('Failed to delete task from API:', err);
+      // Delete completed tasks from API
+      completedIds.forEach((id) => {
+        taskApi.deleteTask(id).catch((err) => {
+          console.error('Failed to delete task from API:', err);
+        });
       });
-    });
-  }, [setTasks]);
+    },
+    [setTasks],
+  );
 
   return {
     tasks,

@@ -33,7 +33,7 @@ function App() {
         category={activeCategory}
         onToggleComplete={updateTask}
         onDelete={deleteTask}
-        onClearCompleted={clearCompleted}
+        onClearCompleted={() => clearCompleted(activeCategory)}
       />
     </div>
   );
