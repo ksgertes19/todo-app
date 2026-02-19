@@ -258,6 +258,76 @@ All endpoints are prefixed with `/api`
 
 ---
 
+## 🎨 Design Decisions & Assumptions
+
+### Architecture
+
+- **Dual Architecture:** Separate frontend (React) and backend (Express) for scalability and independent deployment
+- **RESTful API:** 4 endpoints handling CRUD operations with standardized request/response formats
+- **File-based Storage:** JSON persistence (`data/tasks.json`) suitable for MVP, not production scale
+- **No Database:** Simpler setup and faster prototyping, but data is lost on server restart
+
+### Frontend State Management
+
+- **Custom Hooks:** State management without Redux/Context (lighter and sufficient for small-to-medium apps)
+- **localStorage First:** Offline-first approach with optional backend API sync for data persistence
+- **Fire-and-Forget API Calls:** Non-blocking API updates for better UX (saves to localStorage immediately)
+- **No Conflict Resolution:** Potential sync divergence between client localStorage and server data
+
+### Task Model
+
+- **Fixed Categories:** Only 2 categories (Personal & Professional) - users cannot create custom categories
+- **Limited Fields:** Tasks contain description, category, completed status, and timestamps only
+  - No priority levels, due dates, subtasks, tags, or descriptions
+- **Task IDs:** Generated using `Date.now().toString()` (minimal collision risk for typical usage)
+- **No User Authentication:** All data is public - suitable for single-user MVP only
+
+### UI/UX Design
+
+- **Single Tab View:** Users focus on one category at a time (cannot view both categories simultaneously)
+- **Category-Aware Clear:** "Clear Completed" deletes only completed tasks in the active category
+- **Input Validation:** Empty descriptions are prevented via disabled button state
+- **Optimistic Updates:** UI updates immediately before API confirmation (localStorage as fallback)
+
+### Known Limitations
+
+| Limitation                | Impact                      | Reason                          |
+| ------------------------- | --------------------------- | ------------------------------- |
+| ❌ No multi-user support  | Single-user only            | No authentication/authorization |
+| ❌ No data export/import  | Cannot backup/restore       | Not yet implemented             |
+| ❌ No task search         | Limited discoverability     | Not in MVP scope                |
+| ❌ No error undo          | Destructive edits permanent | Simplified logic                |
+| ❌ No SSL/HTTPS           | Not secure for production   | HTTP only by default            |
+| ❌ Single server instance | No load balancing           | Single point of failure         |
+
+### Why These Decisions?
+
+**Offline-First + API Sync:**
+
+- Users can work without internet
+- Changes eventually sync when online
+- Better UX than blocking on network
+
+**localStorage over Database:**
+
+- Faster MVP development
+- No DevOps overhead
+- Suitable for assessment/prototype
+
+**Fire-and-Forget API:**
+
+- Immediate feedback to user
+- Doesn't block UI thread
+- Trade-off: potential data loss if server fails
+
+**Category-Aware Clear:**
+
+- Aligns with industry standards (Todoist, Microsoft To Do)
+- Prevents accidental deletion of tasks in other categories
+- More intuitive for users
+
+---
+
 ## 🔄 Development Workflow
 
 ### Running Both Servers (Recommended Terminal Setup)
