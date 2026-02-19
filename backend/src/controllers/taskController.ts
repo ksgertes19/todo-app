@@ -6,7 +6,6 @@ import {
 import { storage } from "../utils/storage";
 import { TaskModel } from "../models/task";
 import { CreateTaskDTO, UpdateTaskDTO } from "../types";
-import { error } from "node:console";
 
 // Get /api/tasks -> Retrieve all tasks
 export const getAllTasks = (
