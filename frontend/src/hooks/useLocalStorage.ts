@@ -23,7 +23,7 @@ export function useLocalStorage<T>(
     }
   };
 
-  const [storedValue, setStoredValue] = useState<T>(readValue);
+  const [storedValue, setStoredValue] = useState<T>(() => readValue());
 
   // Update localStorage when state changes
   const setValue: Dispatch<SetStateAction<T>> = (value) => {

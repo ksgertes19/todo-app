@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Task } from '../types';
 import { taskApi } from '../services/api';
 import { useLocalStorage } from './useLocalStorage';
@@ -22,6 +22,12 @@ export function useTasks(): UseTasksReturn {
   const [tasks, setTasks] = useLocalStorage<Task[]>('tasks', []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const tasksRef = useRef(tasks);
+
+  // Keep ref in sync with tasks
+  useEffect(() => {
+    tasksRef.current = tasks;
+  }, [tasks]);
 
   // Load tasks from API on mount
   const loadTasks = useCallback(async () => {
@@ -38,10 +44,11 @@ export function useTasks(): UseTasksReturn {
     }
   }, [setTasks]);
 
-  // Load tasks on component mount
+  // Load tasks on component mount (only once)
   useEffect(() => {
     loadTasks();
-  }, [loadTasks]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Add new task
   const addTask = useCallback(
@@ -61,11 +68,11 @@ export function useTasks(): UseTasksReturn {
       };
 
       // Optimistic update to localStorage
-      const updatedTasks = [...tasks, newTask];
+      const updatedTasks = [...tasksRef.current, newTask];
       setTasks(updatedTasks);
       setError(null);
 
-      // Sync with API
+      // Sync with API (fire and forget)
       taskApi
         .createTask({ description, category })
         .catch((err) => {
@@ -73,13 +80,13 @@ export function useTasks(): UseTasksReturn {
           // Task is still in localStorage as fallback
         });
     },
-    [tasks, setTasks],
+    [setTasks],
   );
 
   // Update task (toggle completion)
   const updateTask = useCallback(
     (id: string, completed: boolean) => {
-      const updatedTasks = tasks.map((task) =>
+      const updatedTasks = tasksRef.current.map((task) =>
         task.id === id
           ? {
               ...task,
@@ -92,36 +99,36 @@ export function useTasks(): UseTasksReturn {
       setTasks(updatedTasks);
       setError(null);
 
-      // Sync with API
+      // Sync with API (fire and forget)
       taskApi.updateTask(id, { completed }).catch((err) => {
         console.error('Failed to update task on API:', err);
       });
     },
-    [tasks, setTasks],
+    [setTasks],
   );
 
   // Delete task
   const deleteTask = useCallback(
     (id: string) => {
-      const updatedTasks = tasks.filter((task) => task.id !== id);
+      const updatedTasks = tasksRef.current.filter((task) => task.id !== id);
       setTasks(updatedTasks);
       setError(null);
 
-      // Sync with API
+      // Sync with API (fire and forget)
       taskApi.deleteTask(id).catch((err) => {
         console.error('Failed to delete task from API:', err);
       });
     },
-    [tasks, setTasks],
+    [setTasks],
   );
 
   // Clear completed tasks
   const clearCompleted = useCallback(() => {
-    const completedIds = tasks
+    const completedIds = tasksRef.current
       .filter((task) => task.completed)
       .map((task) => task.id);
 
-    const updatedTasks = tasks.filter((task) => !task.completed);
+    const updatedTasks = tasksRef.current.filter((task) => !task.completed);
     setTasks(updatedTasks);
 
     // Delete completed tasks from API
@@ -130,7 +137,7 @@ export function useTasks(): UseTasksReturn {
         console.error('Failed to delete task from API:', err);
       });
     });
-  }, [tasks, setTasks]);
+  }, [setTasks]);
 
   return {
     tasks,
